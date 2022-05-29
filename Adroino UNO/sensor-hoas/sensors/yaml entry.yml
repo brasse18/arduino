@@ -1,0 +1,39 @@
+# Example configuration.yaml entry
+sensor:
+  - platform: scrape
+    resource: https://elen.nu/timpriser-pa-el-for-elomrade-se3-stockholm/
+    name: Electricity price
+    select: ".text-lg:is(span)"
+    index: 1
+    value_template: '{{ value | replace (",", ".") | float }}'
+    unit_of_measurement: "öre/kWh"
+    
+        
+sensor:
+  - platform: serial
+    serial_port: /dev/ttyACM0
+    baudrate: 9600
+    
+template:
+  sensor:
+    - name: Björns-Temperature
+      unit_of_measurement: "°C"
+      state: "{{ states('sensor.serial_sensor').split(',')[0] | float(default=0) }}"
+      unique_id: bjorn_temp
+  binary_sensor:
+    - name: Björns-Prodjektor
+      state: "{{ states('sensor.serial_sensor').split(',')[2] | float(default=0) }}"
+      unique_id: bjorn_prodjektor
+    - name: Bjorn-sleep
+      state: "{{ states('sensor.serial_sensor').split(',')[3] | float(default=0) }}"
+      unique_id: bjorn_sleep_mode
+      
+switch:
+  - platform: command_line
+    switches:
+      led:
+        command_on: "echo '1' > /dev/ttyACM0"
+        command_off: "echo '0' > /dev/ttyACM0"
+        value_template: "{{ states('sensor.serial_sensor').split(',')[1] | float(default=0) }}"
+        unique_id: bjorn_led
+        friendly_name: adroino-led
